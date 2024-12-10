@@ -1,8 +1,8 @@
 {
-  "name": "dashboardclase",
+  "name": "dashboarddawn",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://alejandrosv2004.github.io/dashboardClase/",
+  "homepage": "https://lromeror.github.io/dashboardDawn",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,10 +13,9 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "@emotion/react": "^11.13.5",
-    "@emotion/styled": "^11.13.5",
-    "@mui/material": "^6.1.9",
-    "@mui/x-charts": "^7.23.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.1.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
