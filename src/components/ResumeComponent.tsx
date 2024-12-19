@@ -17,7 +17,7 @@ const ResumeComponent: React.FC<ResumeComponentProps> = ({ city, country, condit
     const intervalId = setInterval(() => {
       setTime(new Date());
     }, 60000);
-    return () => clearInterval(intervalId); // Limpiar el intervalo al desmontar el componente
+    return () => clearInterval(intervalId);
   }, []);
 
   const formattedTime = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -27,8 +27,8 @@ const ResumeComponent: React.FC<ResumeComponentProps> = ({ city, country, condit
       elevation={3}
       sx={{
         padding: 2,
-        background: 'linear-gradient(to right,rgb(251, 188, 71),rgb(0, 169, 254))', // Fondo degradado
-        color: '#fff', // Color de texto blanco
+        background: 'linear-gradient(to right,rgb(251, 188, 71),rgb(0, 169, 254))', 
+        color: '#fff', 
       }}
     >
       <Grid container spacing={2} sx={{ height: '100%' }}>
@@ -52,7 +52,7 @@ const ResumeComponent: React.FC<ResumeComponentProps> = ({ city, country, condit
                 sx={{
                   fontWeight: 'bold',
                   mb: 2,
-                  textShadow: '1px 1px 4px rgba(0, 0, 0, 0.5)', // Sombra en el texto
+                  textShadow: '1px 1px 4px rgba(0, 0, 0, 0.5)', 
                 }}
               >
                 {city} ({country})

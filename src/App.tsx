@@ -32,7 +32,7 @@ const theme = createTheme({
 });
 
 const App: React.FC = () => {
-    const [cityInput, setCityInput] = useState<string>(''); // Estado corregido
+    const [cityInput, setCityInput] = useState<string>('');
     const [selectedCity, setSelectedCity] = useState<string>('Guayaquil');
     const [forecastData, setForecastData] = useState<any>(null);
     const [historicalType, setHistoricalType] = useState<string>('temperature');
