@@ -7,22 +7,21 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Item from "../interface/Item";
 import { useEffect, useState } from 'react';
+
 const formatoHora = (dateTime: String): String => {
-  // Convierte el objeto String a una cadena normal y extrae la hora
   const timeString = new Date(dateTime.toString()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  return new String(timeString); // Devuelve un nuevo objeto String
+  return new String(timeString); 
 };
 interface MyProp {
   itemsIn: Item[];
 }
 export default function BasicTable(props: MyProp) {
-  // Crear estado local para almacenar el arreglo del tipo Item
+
   const [rows, setRows] = useState<Item[]>([]);
 
-  // useEffect para sincronizar el estado local con el prop itemsIn
   useEffect(() => {
-    setRows(props.itemsIn); // Actualiza el estado local con el valor del prop
-  }, [props.itemsIn]); // Solo se ejecuta cuando cambia props.itemsIn
+    setRows(props.itemsIn); 
+  }, [props.itemsIn]); 
   return (
     <TableContainer component={Paper}>
       <Table aria-label="weather table">

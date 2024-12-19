@@ -1,135 +1,166 @@
-import './App.css'
-import Grid from '@mui/material/Grid2' 
-import IndicatorWeather from './components/IndicatorWeather';
-import TableWeather from './components/TableWeather';
-import ControlWeather from './components/ControlWeather';
-import LineChartWeather from './components/LineChartWeather';
-import Item from "./interface/Item";
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import CitySelector from './components/CitySelector';
+import WeatherIndicator from './components/WeatherIndicator';
+import WeatherTable from './components/WeatherTable';
+import WeatherChart from './components/WeatherChart';
+import ForecastIndicator from './components/ForecastIndicator';
+import SearchCityInput from './components/SearchCityInput';
+import Box from '@mui/material/Box';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { AppBar, Toolbar, List, ListItemButton, ListItemText, Typography, Grid, Container } from '@mui/material';
 
-interface Indicator {
-  title?: String;
-  subtitle?: String;
-  value?: String;
-}
+import { fetchHistoricalWeatherData, fetchCoordinates } from './api/api';
 
-function App() {
-   const [items, setItems] = useState<Item[]>([]);
-   let [indicators, setIndicators] = useState<Indicator[]>([]);
-   let [owm, setOWM] = useState(localStorage.getItem("openWeatherMap"));
+const ecuadorianCities = [
+    'Cuenca', 'Guaranda', 'Azogues', 'Tulcán', 'Riobamba', 'Latacunga',
+    'Machala', 'Puerto Baquerizo Moreno', 'Guayaquil',
+    'Ibarra', 'Loja', 'Babahoyo', 'Portoviejo', 'Macas', 'Tena', 'Puyo', 'Quito', 'Santa Elena',
+    'Nueva Loja', 'Ambato', 'Zamora'
+];
 
-   useEffect(() => {
-    const apiURL = 'https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=45f9bc3282db66f8b0525afe1ea11bd9';
+const theme = createTheme({
+    typography: {
+        h1: {
+            fontSize: '2rem',
+        },
+        h2: {
+            fontSize: '1.8rem',
+            marginTop: 30,
+            marginBottom: 30
+        },
+    },
+});
 
-    fetch(apiURL)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Error al obtener los datos');
+const App: React.FC = () => {
+    const [cityInput, setCityInput] = useState<string>(''); // Estado corregido
+    const [selectedCity, setSelectedCity] = useState<string>('Guayaquil');
+    const [forecastData, setForecastData] = useState<any>(null);
+    const [historicalType, setHistoricalType] = useState<string>('temperature');
+
+    useEffect(() => {
+        if (selectedCity) {
+            handleCityChange(selectedCity);
         }
-        return response.text();
-      })
-      .then((data) => {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(data, 'application/xml');
-        const timeElements = xmlDoc.getElementsByTagName('time');
-        const dataToItems: Item[] = [];
+    }, [selectedCity, historicalType]);
 
-        for (let i = 0; i < timeElements.length; i++) {
-          const time = timeElements[i];
-          const dateStart = time.getAttribute('from') || '';
-          const dateEnd = time.getAttribute('to') || '';
-          const precipitation = time.querySelector('precipitation')?.getAttribute('probability') || '0';
-          const humidity = time.querySelector('humidity')?.getAttribute('value') || '0';
-          const clouds = time.querySelector('clouds')?.getAttribute('all') || '0';
+    const handleCityChange = async (city: string) => {
+        try {
+            const { lat, lon, country } = await fetchCoordinates(city);
+            if (country !== 'EC') {
+                alert('Ingresa una ciudad de Ecuador.');
+                return;
+            }
 
-          dataToItems.push({ dateStart, dateEnd, precipitation, humidity, clouds });
+            setSelectedCity(city);
+
+            const now = new Date();
+            const startDate = now.toISOString().split('T')[0];
+            now.setDate(now.getDate() + 3);
+            const endDate = now.toISOString().split('T')[0];
+            const forecast = await fetchHistoricalWeatherData(lat, lon, startDate, endDate, historicalType);
+            setForecastData(forecast);
+        } catch (err) {
+            console.error('Error obteniendo los datos:', err);
         }
+    };
 
-        setItems(dataToItems.slice(0, 6));
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-      });
-
-    let request = async () => {
-       let savedTextXML = localStorage.getItem("openWeatherMap") || "";
-       let expiringTime = localStorage.getItem("expiringTime");
-       let nowTime = (new Date()).getTime();
-       if(expiringTime === null || nowTime > parseInt(expiringTime)) {
-        let API_KEY = "45f9bc3282db66f8b0525afe1ea11bd9"
-        let response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=${API_KEY}`)
-        let savedTextXML = await response.text();
-        let hours = 0.01
-        let delay = hours * 3600000
-        let expiringTime = nowTime + delay
-
-        localStorage.setItem("openWeatherMap", savedTextXML)
-        localStorage.setItem("expiringTime", expiringTime.toString())
-        localStorage.setItem("nowTime", nowTime.toString())
-        localStorage.setItem("expiringDateTime", new Date(expiringTime).toString())
-        localStorage.setItem("nowDateTime", new Date(nowTime).toString())
-
-        setOWM(savedTextXML)
-       }
-
-       if(savedTextXML) {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(savedTextXML, "application/xml");
-        let dataToIndicators : Indicator[] = new Array<Indicator>();
-
-        let name = xml.getElementsByTagName("name")[0].innerHTML || ""
-        dataToIndicators.push({"title":"Location", "subtitle": "City", "value": name})
-
-        let location = xml.getElementsByTagName("location")[1]
-        let latitude = location.getAttribute("latitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Latitude", "value": latitude })
-
-        let longitude = location.getAttribute("longitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Longitude", "value": longitude })
-
-        let altitude = location.getAttribute("altitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Altitude", "value": altitude })
-
-        console.log(dataToIndicators)
-        setIndicators(dataToIndicators)
-       }
-    }
-
-    request();
-
-  }, [owm]);
-
-  let renderIndicators = () => {
-    return indicators.map(
-      (indicator, idx) => (
-        <Grid key={idx} size={{ xs: 12, md: 3 }}>
-            <IndicatorWeather 
-                title={indicator["title"]} 
-                subtitle={indicator["subtitle"]} 
-                value={indicator["value"]} />
-        </Grid>
-      )
+    return (
+        <ThemeProvider theme={theme}>
+            <AppBar position="static" sx={{ backgroundColor: '#78a' }}>
+                <Toolbar>
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            flexGrow: 1,
+                            textAlign: 'left',
+                        }}
+                    >
+                        Climate Weather
+                    </Typography>
+                    <Box>
+                        <List sx={{ display: 'flex', flexDirection: 'row', padding: 0 }}>
+                            <ListItemButton component="a" href="#city-selector" sx={{ color: '#fff', padding: '0 16px' }}>
+                                <ListItemText primary="Búsqueda" />
+                            </ListItemButton>
+                            <ListItemButton component="a" href="#indicators" sx={{ color: '#fff', padding: '0 16px' }}>
+                                <ListItemText primary="Indicadores" />
+                            </ListItemButton>
+                            <ListItemButton component="a" href="#forecast" sx={{ color: '#f1bc3', padding: '0 16px' }}>
+                                <ListItemText primary="Pronósticos" />
+                            </ListItemButton>
+                            <ListItemButton component="a" href="#historical" sx={{ color: '#fff', padding: '0 16px' }}>
+                                <ListItemText primary="Histórico" />
+                            </ListItemButton>
+                            <ListItemButton component="a" href="#summary" sx={{ color: '#fff', padding: '0 16px' }}>
+                                <ListItemText primary="Capitales" />
+                            </ListItemButton>
+                        </List>
+                    </Box>
+                </Toolbar>
+            </AppBar>
+            <Container maxWidth="lg" sx={{ py: 4, mt: 0 }}>
+                <Grid container id="city-selector">
+                    <Grid item xs={12}>
+                        <Typography sx={{ fontSize: 40 }} variant="h1" gutterBottom align="center">Weather Ecuador</Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <SearchCityInput
+                            cityInput={cityInput} // Estado actualizado
+                            setCityInput={(city) => {
+                                setCityInput(city); // Función corregida
+                                handleCityChange(city);
+                            }}
+                            handleSearchCity={() => { }}
+                        />
+                    </Grid>
+                    <Grid item id="indicators" alignItems="center" xs={12} py={2}>
+                        <Grid item xs={12}>
+                            <WeatherIndicator city={selectedCity.toUpperCase()} />
+                        </Grid>
+                    </Grid>
+                    <Grid container id="forecast" direction="row">
+                        <Grid item xs={12}>
+                            <Typography variant="h2" align="center">Pronósticos</Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Grid container direction="row" spacing={2}>
+                                <Grid item lg={8} xs={12} id="historical">
+                                    <WeatherChart city={selectedCity} historicalType={historicalType} />
+                                </Grid>
+                                <Grid item lg={4} xs={12}>
+                                    <Grid container direction="column" spacing={2}>
+                                        <Grid item xs={12}>
+                                            <CitySelector
+                                                historicalType={historicalType}
+                                                setHistoricalType={setHistoricalType}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Grid container spacing={2} direction="column">
+                                                {[1, 2, 3].map(index => (
+                                                    <Grid item xs={12} sm={4} key={index}>
+                                                        <ForecastIndicator
+                                                            forecastData={forecastData}
+                                                            historicalType={historicalType}
+                                                            index={index}
+                                                        />
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                    <Grid item xs={12} id="summary">
+                        <Typography variant="h2" align="left">Forecast Capital</Typography>
+                        <WeatherTable cities={ecuadorianCities.filter(city => city !== selectedCity)} />
+                    </Grid>
+                </Grid>
+            </Container>
+        </ThemeProvider>
     );
-  }
-
-  return (
-    <Grid container spacing={5}>
-        {renderIndicators()}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <ControlWeather/>
-            </Grid>
-            <Grid size={{ xs: 12, md: 9 }}>
-              <TableWeather itemsIn={items} />
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <LineChartWeather/>
-        </Grid>
-    </Grid>
-  );
-}
+};
 
 export default App;
